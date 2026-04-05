@@ -1,0 +1,367 @@
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Robojini/Tuturial_UI_Library/main/UI_Template_1"))()
+
+local Window = Library.CreateLib("Lampa_PampaGui", "RJTheme7")
+
+-- ========== ВКЛАДКА MAIN (Движение) ==========
+local TabMove = Window:NewTab("🏃 Движение")
+
+local SectionMove = TabMove:NewSection("Скорость и прыжки")
+
+SectionMove:NewTextBox("Скорость (WalkSpeed)", "Введи число", function(txt)
+    local speed = tonumber(txt)
+    if speed then
+        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = speed
+    end
+end)
+
+SectionMove:NewSlider("WalkSpeed", "Ползунок скорости", 500, 16, function(s)
+    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = s
+end)
+
+SectionMove:NewSlider("JumpPower", "Высота прыжка", 500, 50, function(s)
+    game.Players.LocalPlayer.Character.Humanoid.JumpPower = s
+end)
+
+SectionMove:NewButton("Auto-Walk", "Автоматический шаг вперёд", function()
+    local humanoid = game.Players.LocalPlayer.Character.Humanoid
+    local bodyVelocity = Instance.new("BodyVelocity")
+    bodyVelocity.MaxForce = Vector3.new(100000, 0, 100000)
+    bodyVelocity.Velocity = humanoid.RootPart.CFrame.LookVector * 16
+    bodyVelocity.Parent = humanoid.RootPart
+    wait(0.1)
+    bodyVelocity:Destroy()
+end)
+
+SectionMove:NewButton("Instant Dash", "Рывок вперёд на 10 метров", function()
+    local root = game.Players.LocalPlayer.Character.HumanoidRootPart
+    root.CFrame = root.CFrame + root.CFrame.LookVector * 10
+end)
+
+local noclipActive = false
+local noclipConnection = nil
+SectionMove:NewButton("Noclip Mode", "Хождение сквозь стены (вкл/выкл)", function()
+    noclipActive = not noclipActive
+    if noclipActive then
+        noclipConnection = game:GetService("RunService").Stepped:Connect(function()
+            if game.Players.LocalPlayer.Character then
+                for _, part in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = false
+                    end
+                end
+            end
+        end)
+    else
+        if noclipConnection then noclipConnection:Disconnect() end
+    end
+end)
+
+SectionMove:NewButton("Ladder Speed", "Мгновенный подъём по лестницам", function()
+    local humanoid = game.Players.LocalPlayer.Character.Humanoid
+    humanoid:GetPropertyChangedSignal("Jump"):Connect(function()
+        if humanoid:GetState() == Enum.HumanoidStateType.Climbing then
+            humanoid.RootPart.Velocity = Vector3.new(0, 50, 0)
+        end
+    end)
+end)
+
+SectionMove:NewButton("Air Jump", "Бесконечные прыжки в воздухе", function()
+    local humanoid = game.Players.LocalPlayer.Character.Humanoid
+    local jumpCount = 0
+    humanoid:GetPropertyChangedSignal("Jump"):Connect(function()
+        if humanoid.Jump then
+            jumpCount = jumpCount + 1
+            if jumpCount > 1 then
+                humanoid.Jump = true
+            end
+        end
+    end)
+end)
+
+-- ========== ВКЛАДКА VISUAL (Визуал) ==========
+local TabVisual = Window:NewTab("👁️ Визуал")
+
+local SectionVisual = TabVisual:NewSection("Подсветка")
+
+SectionVisual:NewButton("Highlight Monsters", "Подсветка монстров красным", function()
+    spawn(function()
+        while wait(0.5) do
+            for _, obj in pairs(workspace:GetDescendants()) do
+                if obj.Name:find("Monster") or obj.Name:find("Blue") or obj.Name:find("Green") or obj.Name:find("Red") or obj.Name:find("Yellow") or obj.Name:find("Orange") then
+                    if not obj:FindFirstChild("Highlight") then
+                        local hl = Instance.new("Highlight", obj)
+                        hl.FillColor = Color3.fromRGB(255, 0, 0)
+                        hl.FillTransparency = 0.5
+                        hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    end
+                end
+            end
+        end
+    end)
+end)
+
+SectionVisual:NewButton("Show Items", "Подсветка предметов (лампочки, баллоны)", function()
+    spawn(function()
+        while wait(0.5) do
+            for _, obj in pairs(workspace:GetDescendants()) do
+                if obj.Name:find("LightBulb") or obj.Name:find("Canister") or obj.Name:find("Lukis") or obj.Name:find("Sugar") then
+                    if not obj:FindFirstChild("Highlight") then
+                        local hl = Instance.new("Highlight", obj)
+                        hl.FillColor = Color3.fromRGB(0, 255, 0)
+                        hl.FillTransparency = 0.3
+                        hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    end
+                end
+            end
+        end
+    end)
+end)
+
+SectionVisual:NewButton("Player Tracker", "Линия к ближайшему игроку", function()
+    local root = game.Players.LocalPlayer.Character.HumanoidRootPart
+    local track = Instance.new("SelectionBox")
+    track.Color = Color3.fromRGB(255, 255, 0)
+    track.LineThickness = 0.1
+    track.Transparency = 0.5
+    track.Parent = root
+    
+    local target = nil
+    local minDist = math.huge
+    for _, plr in pairs(game.Players:GetPlayers()) do
+        if plr ~= game.Players.LocalPlayer then
+            local dist = (root.Position - plr.Character.HumanoidRootPart.Position).Magnitude
+            if dist < minDist then
+                minDist = dist
+                target = plr
+            end
+        end
+    end
+    if target and target.Character then
+        track.Adornee = target.Character.HumanoidRootPart
+    end
+end)
+
+SectionVisual:NewButton("Night Vision", "Постоянно светло как днём", function()
+    game.Lighting.Brightness = 2
+    game.Lighting.ExposureCompensation = 2
+    game.Lighting.Ambient = Color3.fromRGB(255, 255, 255)
+    game.Lighting.ClockTime = 12
+    game.Lighting.FogEnd = 1000
+end)
+
+SectionVisual:NewButton("No Fog", "Убрать туман", function()
+    game.Lighting.FogEnd = 100000
+    game.Lighting.FogStart = 100000
+end)
+
+-- ========== ВКЛАДКА PROTECT (Защита) ==========
+local TabProtect = Window:NewTab("🛡️ Защита")
+
+local SectionProtect = TabProtect:NewSection("Неуязвимость")
+
+local godModeActive = false
+SectionProtect:NewButton("God Mode", "Неуязвимость (вкл/выкл)", function()
+    godModeActive = not godModeActive
+    local humanoid = game.Players.LocalPlayer.Character.Humanoid
+    if godModeActive then
+        humanoid.MaxHealth = math.huge
+        humanoid.Health = math.huge
+        humanoid.BreakJointsOnDeath = false
+    else
+        humanoid.MaxHealth = 100
+        humanoid.BreakJointsOnDeath = true
+    end
+end)
+
+SectionProtect:NewButton("No Fall Damage", "Нет урона от падения", function()
+    local humanoid = game.Players.LocalPlayer.Character.Humanoid
+    humanoid:GetPropertyChangedSignal("Jump"):Connect(function()
+        humanoid.UseJumpPower = true
+    end)
+end)
+
+SectionProtect:NewButton("Anti-Stun", "Не оглушают монстры", function()
+    local humanoid = game.Players.LocalPlayer.Character.Humanoid
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.GettingUp, false)
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.Stunned, false)
+end)
+
+SectionProtect:NewButton("Auto-Respawn", "Мгновенное возрождение", function()
+    game.Players.LocalPlayer.CharacterAdded:Connect(function()
+        wait(0.5)
+        game.Players.LocalPlayer.Character.Humanoid.Health = 100
+    end)
+end)
+
+-- ========== ВКЛАДКА AUTO (Автоматизация) ==========
+local TabAuto = Window:NewTab("🤖 Автоматизация")
+
+local SectionAuto = TabAuto:NewSection("Авто-сбор")
+
+local autoCollectActive = false
+local autoCollectThread = nil
+
+SectionAuto:NewButton("Auto-Farm Items", "Авто-сбор предметов (вкл/выкл)", function()
+    autoCollectActive = not autoCollectActive
+    
+    if autoCollectActive then
+        autoCollectThread = spawn(function()
+            while autoCollectActive do
+                local root = game.Players.LocalPlayer.Character.HumanoidRootPart
+                local nearest = nil
+                local minDist = math.huge
+                
+                for _, obj in pairs(workspace:GetDescendants()) do
+                    if obj:IsA("BasePart") and (obj.Name:find("LightBulb") or obj.Name:find("Canister") or obj.Name:find("Lukis") or obj.Name:find("Sugar")) then
+                        local dist = (root.Position - obj.Position).Magnitude
+                        if dist < minDist then
+                            minDist = dist
+                            nearest = obj
+                        end
+                    end
+                end
+                
+                if nearest then
+                    root.CFrame = CFrame.new(nearest.Position) + Vector3.new(0, 2, 0)
+                end
+                wait(0.3)
+            end
+        end)
+    else
+        if autoCollectThread then task.cancel(autoCollectThread) end
+    end
+end)
+
+SectionAuto:NewButton("Auto-Delivery", "Авто-сдача предметов", function()
+    local deliverySpot = nil
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj.Name:find("Delivery") or obj.Name:find("Drop") then
+            deliverySpot = obj
+            break
+        end
+    end
+    if deliverySpot then
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(deliverySpot.Position)
+    end
+end)
+
+-- ========== ВКЛАДКА FUN (Весёлое) ==========
+local TabFun = Window:NewTab("🎮 Весёлое")
+
+local SectionFun = TabFun:NewSection("Троллинг")
+
+SectionFun:NewButton("Fling Player", "Кидать другого игрока", function()
+    local target = nil
+    for _, plr in pairs(game.Players:GetPlayers()) do
+        if plr ~= game.Players.LocalPlayer then
+            target = plr
+            break
+        end
+    end
+    if target and target.Character and target.Character.HumanoidRootPart then
+        local root = game.Players.LocalPlayer.Character.HumanoidRootPart
+        local targetRoot = target.Character.HumanoidRootPart
+        root.CFrame = targetRoot.CFrame
+        local bv = Instance.new("BodyVelocity", targetRoot)
+        bv.MaxForce = Vector3.new(100000, 100000, 100000)
+        bv.Velocity = Vector3.new(100000, 100000, 100000)
+        wait(0.2)
+        bv:Destroy()
+    end
+end)
+
+SectionFun:NewButton("Freeze Player", "Заморозить другого игрока", function()
+    local target = nil
+    for _, plr in pairs(game.Players:GetPlayers()) do
+        if plr ~= game.Players.LocalPlayer then
+            target = plr
+            break
+        end
+    end
+    if target and target.Character then
+        for _, part in pairs(target.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Anchored = true
+            end
+        end
+    end
+end)
+
+SectionFun:NewButton("Invisible", "Сделать себя невидимым", function()
+    for _, part in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.Transparency = 1
+        end
+    end
+end)
+
+SectionFun:NewButton("Fake Disconnect", "Имитировать выход из игры", function()
+    game.Players.LocalPlayer:Kick("Disconnected from server")
+end)
+
+SectionFun:NewTextBox("Chat Spam", "Введи текст для спама", function(txt)
+    spawn(function()
+        for i = 1, 20 do
+            game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(txt, "All")
+            wait(0.5)
+        end
+    end)
+end)
+
+-- ========== ВКЛАДКА GUI (Твои старые кнопки) ==========
+local TabGUI = Window:NewTab("GUI")
+
+local SectionGUI = TabGUI:NewSection("Загрузчики")
+
+SectionGUI:NewButton("kawaii", "ButtonInfo", function()
+    pcall(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/hellohellohell012321/KAWAII-AURA/main/kawaii_aura.lua", true))()
+    end)
+end)
+
+SectionGUI:NewButton("dex", "ButtonInfo", function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/peyton2465/Dex/master/out.lua"))()
+end)
+
+SectionGUI:NewButton("infinite Yield", "ButtonInfo", function()
+    loadstring(game:HttpGet(('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'),true))()
+end)
+
+SectionGUI:NewButton("coolgui", "ButtonInfo", function()
+    loadstring(game:HttpGet("https://pastebin.com/raw/kxuNSVD3"))('Furry gon complain ??')
+end)
+
+SectionGUI:NewButton("1x1x1x1gui", "ButtonInfo", function()
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/tyreltrijo/1x1/main/1x1x1x1'))()
+end)
+
+SectionGUI:NewButton("Jerk off", "please r6", function()
+    getgenv().JERK_OFF_SPEED = 2
+    getgenv().KEEP_ON_DEATH = true
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/Sakupenny/Universal-Jerk-Off/refs/heads/main/Main.lua"))()
+end)
+
+SectionGUI:NewButton("front flip", "lol", function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/SHRTRYScriptMANhere/stolenahhfrotflip/refs/heads/main/Flip", true))()
+end)
+
+SectionGUI:NewButton("ESP Boxes", "Simple ESP", function()
+    spawn(function()
+        while wait(0.5) do
+            for _, child in ipairs(workspace:GetDescendants()) do
+                if child:FindFirstChild("Humanoid") and child ~= game.Players.LocalPlayer.Character then
+                    if not child:FindFirstChild("EspBox") then
+                        local esp = Instance.new("BoxHandleAdornment", child)
+                        esp.Adornee = child
+                        esp.Size = Vector3.new(4, 5, 1)
+                        esp.Transparency = 0.6
+                        esp.Color3 = Color3.fromRGB(255, 48, 48)
+                        esp.AlwaysOnTop = true
+                        esp.Name = "EspBox"
+                    end
+                end
+            end
+        end
+    end)
+end)
