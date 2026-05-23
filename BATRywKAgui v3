@@ -3441,7 +3441,7 @@ local function scanForBackdoors()
 		print("[РЕЗУЛЬТАТ] Бэкдоров НЕ НАЙДЕНО")
 		print("[РЕЗУЛЬТАТ] Слоты 5-9 останутся пустыми")
 
-
+		-- Очищаем слоты 5-9
 		for i = 5, 9 do
 			updatePage9Slot(i, "Empty", nil)
 		end
