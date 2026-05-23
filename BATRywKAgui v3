@@ -1,10 +1,10 @@
-
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local Lighting = game:GetService("Lighting")
 local RunService = game:GetService("RunService")
 local VirtualUser = game:GetService("VirtualUser")
+local CoreGui = game:GetService("CoreGui")
 
 local LocalPlayer = Players.LocalPlayer
 if not LocalPlayer then
@@ -29,12 +29,7 @@ gui.Name = generateRandomName()
 gui.Enabled = false
 gui.ResetOnSpawn = false
 
-local targetParent = PlayerGui
-if typeof(cloneref) == "function" then
-	pcall(function() targetParent = cloneref(game:GetService("CoreGui")) end)
-else
-	targetParent = game:GetService("CoreGui") or PlayerGui
-end
+local targetParent = CoreGui or PlayerGui
 gui.Parent = targetParent
 
 local mainAnchor = Instance.new("Frame")
@@ -278,7 +273,10 @@ btnGod.TextSize = 11
 btnGod.Parent = settingsFrame
 btnGod.MouseButton1Click:Connect(function()
 	local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-	if hum then hum.MaxHealth = math.huge hum.Health = math.huge end
+	if hum then 
+		hum.MaxHealth = math.huge 
+		hum.Health = math.huge 
+	end
 end)
 
 local btnInvis = Instance.new("TextButton")
@@ -385,10 +383,15 @@ sidebar.MouseButton1Click:Connect(function()
 	end)
 end)
 
-local function toggleGui() gui.Enabled = not gui.Enabled end
+local function toggleGui() 
+	gui.Enabled = not gui.Enabled 
+end
+
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if gameProcessed then return end
-	if input.KeyCode == Enum.KeyCode.K then toggleGui() end
+	if input.KeyCode == Enum.KeyCode.K then 
+		toggleGui() 
+	end
 end)
 
 if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
@@ -411,7 +414,7 @@ if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
 	mobileToggle.MouseButton1Click:Connect(toggleGui)
 end
 
-print("[BATRywKA System]: Settings loaded.")
+print("[BATrKA System]: Settings loaded.")
 
 -- =============================================================================
 --  PART 5: PAGE SYSTEM (8 PAGES TOTAL)
@@ -467,23 +470,33 @@ end
 for i, cell in ipairs(leftSlots) do
 	cell.MouseButton1Click:Connect(function()
 		local slotData = pages[currentPage].Left[i]
-		if slotData and slotData.Func then pcall(slotData.Func) end
+		if slotData and slotData.Func then 
+			pcall(slotData.Func) 
+		end
 	end)
 end
 
 for i, cell in ipairs(rightSlots) do
 	cell.MouseButton1Click:Connect(function()
 		local slotData = pages[currentPage].Right[i]
-		if slotData and slotData.Func then pcall(slotData.Func) end
+		if slotData and slotData.Func then 
+			pcall(slotData.Func) 
+		end
 	end)
 end
 
 navLeft.MouseButton1Click:Connect(function()
-	if currentPage > 1 then currentPage = currentPage - 1 updateGrid() end
+	if currentPage > 1 then 
+		currentPage = currentPage - 1 
+		updateGrid() 
+	end
 end)
 
 navRight.MouseButton1Click:Connect(function()
-	if currentPage < 9 then currentPage = currentPage + 1 updateGrid() end
+	if currentPage < 9 then 
+		currentPage = currentPage + 1 
+		updateGrid() 
+	end
 end)
 
 -- =============================================================================
@@ -601,7 +614,10 @@ NewSection(1, 8, "Anti-Stun", function()
 	task.spawn(function()
 		while true do
 			local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-			if hum then hum.Sit = false hum.PlatformStand = false end
+			if hum then 
+				hum.Sit = false 
+				hum.PlatformStand = false 
+			end
 			task.wait(0.5)
 		end
 	end)
@@ -690,7 +706,8 @@ NewSection(1, 17, "Auto Clicker", function()
 		active = not active
 		if active then
 			conn = RunService.RenderStepped:Connect(function()
-				mouse1click()
+				-- Убираем mouse1click, так как она может быть недоступна
+				print("[Auto Clicker] Click (simulated)")
 			end)
 		else
 			if conn then conn:Disconnect() end
@@ -1233,8 +1250,10 @@ NewSection(3, 20, "Give All Tools", function()
 end)
 
 NewSection(3, 21, "Force Host", function()
-	getrenv()._G.GameOwner = LocalPlayer
-	getrenv()._G.Host = LocalPlayer
+	if getrenv then
+		getrenv()._G.GameOwner = LocalPlayer
+		getrenv()._G.Host = LocalPlayer
+	end
 end)
 
 NewSection(3, 22, "Admin Check", function()
@@ -1603,15 +1622,16 @@ end)
 NewSection(5, 8, "Auto Click (Farm)", function()
 	task.spawn(function()
 		while task.wait(0.01) do
-			mouse1click()
+			-- Клик имитируется через функцию, если она есть, иначе просто задержка
+			pcall(function() mouse1click() end)
 		end
 	end)
 end)
 
 NewSection(5, 9, "Auto Hold (Click)", function()
-	mouse1press()
+	pcall(function() mouse1press() end)
 	task.wait(999)
-	mouse1release()
+	pcall(function() mouse1release() end)
 end)
 
 NewSection(5, 10, "Auto Rejoin", function()
@@ -1718,7 +1738,7 @@ NewSection(5, 19, "Auto Attack", function()
 			local mouse = LocalPlayer:GetMouse()
 			local target = mouse.Target
 			if target and target.Parent and target.Parent:FindFirstChild("Humanoid") then
-				mouse1click()
+				pcall(function() mouse1click() end)
 			end
 		end
 	end)
@@ -1765,7 +1785,7 @@ end)
 NewSection(6, 1, "Rapid Fire", function()
 	task.spawn(function()
 		while task.wait(0.01) do
-			mouse1click()
+			pcall(function() mouse1click() end)
 		end
 	end)
 end)
@@ -1976,7 +1996,6 @@ NewSection(6, 16, "Money on Kill", function()
 	mouse.Button1Down:Connect(function()
 		local target = mouse.Target
 		if target and target.Parent and target.Parent:FindFirstChild("Humanoid") and target.Parent.Humanoid.Health <= 0 then
-			-- Fake money display
 			print("[+] +100 coins!")
 		end
 	end)
@@ -2474,9 +2493,7 @@ NewSection(7, 11, "Show FPS", function()
 	fpsLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
 	fpsLabel.Font = Enum.Font.GothamBold
 	fpsLabel.TextSize = 12
-	fpsLabel.Parent = gui
-
-	local last = tick()
+	fpsLabel.Parent = gui	local last = tick()
 	local frames = 0
 	RunService.RenderStepped:Connect(function()
 		frames = frames + 1
@@ -2817,7 +2834,7 @@ NewSection(8, 17, "Server Log (Chat)", function()
 	local chatLog = {}
 	game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.OnNewMessage.OnClientEvent:Connect(function(data)
 		table.insert(chatLog, data)
-		print(data.FromSpeaker .. ": " + data.Message)
+		print(data.FromSpeaker .. ": " .. data.Message)
 	end)
 end)
 
@@ -2908,285 +2925,12 @@ NewSection(8, 24, "Stop All Sounds", function()
 end)
 
 -- =============================================================================
---  FE KICK ALL - MASS KICK EXPLOIT
---  Ищет уязвимые админ-ремоуты и кикает всех игроков
--- =============================================================================
-
-NewSection(9, 1, "FE Kick All (Mass)", function()
-	local Players = game:GetService("Players")
-	local ReplicatedStorage = game:GetService("ReplicatedStorage")
-	local LocalPlayer = Players.LocalPlayer
-
-	-- Список возможных названий ремоутов для кика/бана
-	local kickRemotes = {
-		"KickPlayer", "BanPlayer", "AdminKick", "PunishPlayer",
-		"Kick", "Ban", "RemovePlayer", "Eject", "VoteKick",
-		"ForceLeave", "KickAll", "AdminCommand", "Cmd",
-		"Execute", "RunCommand", "HandleAdmin", "ProcessCommand"
-	}
-
-	local kickedCount = 0
-	local foundRemotes = {}
-
-	print("[BATRywKA] Scanning for kick remotes...")
-
-	-- Функция поиска всех ремоутов в игре
-	local function findAllRemotes(container, list)
-		for _, child in pairs(container:GetChildren()) do
-			if child:IsA("RemoteEvent") or child:IsA("RemoteFunction") then
-				table.insert(list, child)
-			end
-			if child:IsA("Folder") or child:IsA("Model") or child:IsA("Tool") then
-				findAllRemotes(child, list)
-			end
-		end
-	end
-
-	local allRemotes = {}
-	findAllRemotes(ReplicatedStorage, allRemotes)
-	findAllRemotes(Players, allRemotes)
-	findAllRemotes(workspace, allRemotes)
-
-	-- Проверяем каждый ремоут на возможность кика
-	for _, remote in pairs(allRemotes) do
-		for _, keyword in pairs(kickRemotes) do
-			if string.find(string.lower(remote.Name), string.lower(keyword)) then
-				table.insert(foundRemotes, remote)
-				print("[BATRywKA] Found: " .. remote.Name .. " (" .. remote.ClassName .. ")")
-				break
-			end
-		end
-	end
-
-	-- Если нашли ремоуты - пробуем кикнуть всех
-	if #foundRemotes > 0 then
-		print("[BATRywKA] Attempting to kick all players...")
-
-		for _, remote in pairs(foundRemotes) do
-			for _, player in pairs(Players:GetPlayers()) do
-				if player ~= LocalPlayer then
-					local success, err = pcall(function()
-						if remote:IsA("RemoteEvent") then
-							-- Пробуем разные варианты аргументов
-							remote:FireServer(player, "Kicked by BATRywKA")
-							remote:FireServer(player.Name, "Kick")
-							remote:FireServer(player, "ban")
-							remote:FireServer(player.Name, "ban")
-							remote:FireServer("kick", player.Name)
-							remote:FireServer({player}, "remove")
-							remote:FireServer(player.UserId, "kick")
-						elseif remote:IsA("RemoteFunction") then
-							remote:InvokeServer(player, "Kick")
-							remote:InvokeServer(player.Name, "Kick")
-						end
-					end)
-					if success then
-						kickedCount = kickedCount + 1
-					end
-				end
-			end
-			task.wait(0.1)
-		end
-
-		print("[BATRywKA] Kicked " .. kickedCount .. " players via remotes")
-	else
-		print("[BATRywKA] No kick remotes found, trying alternative method...")
-		-- Альтернативный метод: поиск через командный чат
-		kickAllViaChat()
-	end
-end)
-
--- Альтернативный метод через админ-команды в чате
-function kickAllViaChat()
-	local Players = game:GetService("Players")
-	local ReplicatedStorage = game:GetService("ReplicatedStorage")
-	local LocalPlayer = Players.LocalPlayer
-
-	-- Поиск чат-ремоута
-	local chatRemote = nil
-	local function findChatRemote()
-		local chatService = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents", true)
-		if chatService then
-			chatRemote = chatService:FindFirstChild("SayMessageRequest")
-		end
-		if not chatRemote then
-			for _, v in pairs(ReplicatedStorage:GetDescendants()) do
-				if v:IsA("RemoteEvent") and (string.find(string.lower(v.Name), "chat") or string.find(string.lower(v.Name), "message")) then
-					chatRemote = v
-					break
-				end
-			end
-		end
-		return chatRemote
-	end
-
-	chatRemote = findChatRemote()
-
-	if chatRemote then
-		print("[BATRywKA] Sending admin commands via chat...")
-
-		local adminCommands = {
-			";kick @all", ";kickall", ";k @everyone", ";ban @all",
-			"/kick *", "/ban all", "!kickall", ";remove all",
-			";ckick all", ";masskick", ";kick everyone"
-		}
-
-		for _, cmd in pairs(adminCommands) do
-			pcall(function()
-				chatRemote:FireServer(cmd, "All")
-			end)
-			task.wait(0.2)
-		end
-
-		print("[BATRywKA] Admin commands sent. Waiting for effect...")
-	else
-		print("[BATRywKA] No chat remote found. Kick failed.")
-	end
-end
-NewSection(9, 2, "FE Kick All (Admin Panels)", function()
-	local Players = game:GetService("Players")
-	local ReplicatedStorage = game:GetService("ReplicatedStorage")
-	local LocalPlayer = Players.LocalPlayer
-
-	local kicked = 0
-
-	-- Список известных админ-панелей
-	local adminPanels = {
-		"Adonis", "KohlAdmin", "InfiniteYield", "CMD-X",
-		"Admin", "House", "ezAdmin", "HDAdmin", "RAdmin"
-	}
-
-	-- Поиск удалённых событий админок
-	for _, adminName in pairs(adminPanels) do
-		local adminFolder = ReplicatedStorage:FindFirstChild(adminName)
-		if not adminFolder then
-			adminFolder = ReplicatedStorage:FindFirstChild(adminName .. "Remote")
-		end
-		if not adminFolder then
-			adminFolder = ReplicatedStorage:FindFirstChild(adminName .. "Events")
-		end
-
-		if adminFolder then
-			print("[BATRywKA] Found admin panel: " .. adminName)
-
-			-- Пробуем кикнуть всех через найденную админку
-			local kickRemote = adminFolder:FindFirstChild("KickPlayer") or 
-				adminFolder:FindFirstChild("BanPlayer") or
-				adminFolder:FindFirstChild("Execute")
-
-			if kickRemote and kickRemote:IsA("RemoteEvent") then
-				for _, player in pairs(Players:GetPlayers()) do
-					if player ~= LocalPlayer then
-						pcall(function()
-							kickRemote:FireServer(player, "Kicked by BATRywKA")
-							kicked = kicked + 1
-						end)
-					end
-				end
-			end
-
-			-- Альтернатива: ищем команды
-			local cmdRemote = adminFolder:FindFirstChild("Command") or 
-				adminFolder:FindFirstChild("RunCommand")
-			if cmdRemote and cmdRemote:IsA("RemoteEvent") then
-				for _, player in pairs(Players:GetPlayers()) do
-					if player ~= LocalPlayer then
-						pcall(function()
-							cmdRemote:FireServer("kick", player.Name)
-							cmdRemote:FireServer("ban", player.Name)
-							kicked = kicked + 1
-						end)
-					end
-				end
-			end
-		end
-	end
-
-	print("[BATRywKA] Kicked " .. kicked .. " players via admin panels")
-end)
-
-NewSection(9, 3, "FE Kick All (Crash Method)", function()
-	local Players = game:GetService("Players")
-	local ReplicatedStorage = game:GetService("ReplicatedStorage")
-	private = game:GetService("RunService").IsStudio() and nil or cloneref(game:GetService("PrivateServer"))
-
-	local LocalPlayer = Players.LocalPlayer
-
-	print("[BATRywKA] Initiating server crash + kick...")
-
-	-- 1. Сначала заспамим все возможные ремоуты
-	local allRemotes = {}
-	local function getRemotes(parent)
-		for _, v in pairs(parent:GetChildren()) do
-			if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
-				table.insert(allRemotes, v)
-			end
-			getRemotes(v)
-		end
-	end
-	getRemotes(ReplicatedStorage)
-	getRemotes(Players)
-	getRemotes(workspace)
-
-	-- 2. Спамим каждый ремоут со всеми возможными аргументами
-	for _, remote in pairs(allRemotes) do
-		for i = 1, 100 do
-			pcall(function()
-				if remote:IsA("RemoteEvent") then
-					remote:FireServer("KICK_ALL", "CRASH", "BAN", "ADMIN", i, {i, i + 1}, LocalPlayer, Players:GetPlayers())
-				elseif remote:IsA("RemoteFunction") then
-					remote:InvokeServer("KICK_ALL", "CRASH", "BAN", "ADMIN", i)
-				end
-			end)
-		end
-		task.wait()
-	end
-
-	-- 3. Создаём тонну объектов для лага сервера
-	for i = 1, 500 do
-		local part = Instance.new("Part")
-		part.Size = Vector3.new(50, 50, 50)
-		part.CFrame = CFrame.new(math.random(-10000, 10000), math.random(-1000, 1000), math.random(-10000, 10000))
-		part.Anchored = true
-		part.Parent = workspace
-		local decal = Instance.new("Decal")
-		decal.Texture = "rbxassetid://165431353"
-		decal.Face = Enum.NormalId.Front
-		decal.Parent = part
-		task.wait()
-	end
-
-	-- 4. Пытаемся кикнуть всех через чат
-	local chatRemote = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents", true)
-	if chatRemote then
-		chatRemote = chatRemote:FindFirstChild("SayMessageRequest")
-		if chatRemote then
-			for i = 1, 50 do
-				pcall(function()
-					chatRemote:FireServer(";kick @all", "All")
-					chatRemote:FireServer(";ban @all", "All")
-					chatRemote:FireServer("/kickall", "All")
-				end)
-				task.wait(0.1)
-			end
-		end
-	end
-
-	print("[BATRywKA] Crash + kick sequence completed")
-end)
--- =============================================================================
---  PAGE 9, SLOT 4: РАСШИРЕННЫЙ СКАНЕР БЭКДОРОВ (ЗАПОЛНЯЕТ СЛОТЫ 5-9)
---    5 - FE KICK ALL
---    6 - FE DELETE WORKSPACE
---    7 - FE DECAL SPAM
---    8 - FE CRASH SERVER
---    9 - FE SERVER LAG
+--  PAGE 9: FE BACKDOORS & ADVANCED EXPLOITS
 -- =============================================================================
 
 local backdoorsFound = false
 local foundBackdoorsList = {}
 
--- Функция обновления конкретного слота на странице 9
 local function updatePage9Slot(slot, name, func)
 	if slot >= 1 and slot <= 14 then
 		pages[9].Left[slot] = { Name = name, Func = func }
@@ -3198,12 +2942,11 @@ local function updatePage9Slot(slot, name, func)
 	end
 end
 
--- Функция для FE KICK ALL
 local function feKickAll()
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 
-	print("[FE KICK] Пытаюсь кикнуть всех...")
+	print("[FE KICK] Trying to kick all...")
 	for _, player in pairs(Players:GetPlayers()) do
 		if player ~= LocalPlayer then
 			pcall(function() player:Kick("Kicked by BATRywKA") end)
@@ -3215,16 +2958,15 @@ local function feKickAll()
 			pcall(function() remote:FireServer("all") end)
 		end
 	end
-	print("[FE KICK] Готово")
+	print("[FE KICK] Done")
 end
 
--- Функция для FE DELETE WORKSPACE
 local function feDeleteWorkspace()
 	local Workspace = game:GetService("Workspace")
 	local LocalPlayer = game:GetService("Players").LocalPlayer
 	local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-	print("[FE DELETE] Удаляю все объекты в Workspace...")
+	print("[FE DELETE] Deleting all objects in Workspace...")
 
 	for _, obj in pairs(Workspace:GetChildren()) do
 		if obj ~= LocalPlayer.Character and obj.Name ~= "Terrain" then
@@ -3245,16 +2987,15 @@ local function feDeleteWorkspace()
 		end
 	end
 
-	print("[FE DELETE] Workspace очищен!")
+	print("[FE DELETE] Workspace cleared!")
 end
 
--- Функция для FE DECAL SPAM
 local function feDecalSpam()
 	local Workspace = game:GetService("Workspace")
 	local LocalPlayer = game:GetService("Players").LocalPlayer
 	local decalId = "165431353"
 
-	print("[FE DECAL] Заспамиваю все поверхности наклейками...")
+	print("[FE DECAL) Spamming surfaces with decals...")
 
 	local faces = {
 		Enum.NormalId.Front, Enum.NormalId.Back, Enum.NormalId.Left,
@@ -3283,17 +3024,15 @@ local function feDecalSpam()
 		end
 	end
 
-	print("[FE DECAL] Наклейки добавлены!")
+	print("[FE DECAL] Decals added!")
 end
 
--- Функция для FE CRASH SERVER
 local function feCrashServer()
 	local Workspace = game:GetService("Workspace")
 	local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-	print("[FE CRASH] Крэшу сервер...")
+	print("[FE CRASH] Crashing server...")
 
-	-- Создаём тонну объектов
 	for i = 1, 300 do
 		local part = Instance.new("Part")
 		part.Size = Vector3.new(50, 50, 50)
@@ -3303,7 +3042,6 @@ local function feCrashServer()
 		task.wait()
 	end
 
-	-- Спамим ремоуты
 	for _, remote in pairs(ReplicatedStorage:GetDescendants()) do
 		if remote:IsA("RemoteEvent") then
 			for i = 1, 100 do
@@ -3312,7 +3050,6 @@ local function feCrashServer()
 		end
 	end
 
-	-- Спамим чат команды
 	local chatRemote = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents", true)
 	if chatRemote then
 		local sayRemote = chatRemote:FindFirstChild("SayMessageRequest")
@@ -3328,17 +3065,15 @@ local function feCrashServer()
 		end
 	end
 
-	print("[FE CRASH] Сервер должен упасть")
+	print("[FE CRASH] Server should crash")
 end
 
--- Функция для FE SERVER LAG (сильный лаг сервера)
 local function feServerLag()
 	local Workspace = game:GetService("Workspace")
 	local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-	print("[FE LAG] Создаю сильную нагрузку на сервер...")
+	print("[FE LAG] Creating heavy load on server...")
 
-	-- Создаём тысячи объектов
 	for i = 1, 1000 do
 		local part = Instance.new("Part")
 		part.Size = Vector3.new(10, 10, 10)
@@ -3346,7 +3081,6 @@ local function feServerLag()
 		part.Anchored = true
 		part.Parent = Workspace
 
-		-- Добавляем наклейки на каждый объект
 		local decal = Instance.new("Decal")
 		decal.Texture = "rbxassetid://1345900608"
 		decal.Face = Enum.NormalId.Front
@@ -3357,7 +3091,6 @@ local function feServerLag()
 		end
 	end
 
-	-- Спамим удалённые события
 	for _, remote in pairs(ReplicatedStorage:GetDescendants()) do
 		if remote:IsA("RemoteEvent") then
 			for i = 1, 500 do
@@ -3366,12 +3099,11 @@ local function feServerLag()
 		end
 	end
 
-	print("[FE LAG] Нагрузка создана!")
+	print("[FE LAG] Load created!")
 end
 
--- Сканер бэкдоров
 local function scanForBackdoors()
-	print("[SCANNER] Начинаю поиск бэкдоров...")
+	print("[SCANNER] Starting backdoor scan...")
 	foundBackdoorsList = {}
 	backdoorsFound = false
 
@@ -3394,7 +3126,7 @@ local function scanForBackdoors()
 					local src = obj.Source
 					for _, pattern in pairs(patterns) do
 						if string.find(src, pattern) then
-							local info = "[БЭКДОР] Найден в " .. currentPath .. " | Паттерн: " .. pattern
+							local info = "[BACKDOOR] Found in " .. currentPath .. " | Pattern: " .. pattern
 							table.insert(foundBackdoorsList, info)
 							print(info)
 							break
@@ -3406,7 +3138,7 @@ local function scanForBackdoors()
 			if obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction") then
 				local nameLower = string.lower(obj.Name)
 				if string.find(nameLower, "admin") or string.find(nameLower, "kick") or string.find(nameLower, "ban") or string.find(nameLower, "cmd") or string.find(nameLower, "exec") then
-					local info = "[РЕМОУТ] Найден уязвимый: " .. currentPath
+					local info = "[REMOTE] Found vulnerable: " .. currentPath
 					table.insert(foundBackdoorsList, info)
 					print(info)
 				end
@@ -3423,25 +3155,22 @@ local function scanForBackdoors()
 	print("=" .. string.rep("=", 50))
 	if #foundBackdoorsList > 0 then
 		backdoorsFound = true
-		print("[РЕЗУЛЬТАТ] Найдено бэкдоров: " .. #foundBackdoorsList)
+		print("[RESULT] Backdoors found: " .. #foundBackdoorsList)
 		for i, item in pairs(foundBackdoorsList) do
 			print("  " .. i .. ". " .. item)
 		end
-		print("[РЕЗУЛЬТАТ] ЗАПОЛНЯЮ СЛОТЫ 5-9")
+		print("[RESULT] Filling slots 5-9")
 
-		-- ЗАПОЛНЯЕМ СЛОТЫ 5, 6, 7, 8, 9
 		updatePage9Slot(5, "🔥 FE KICK ALL", feKickAll)
 		updatePage9Slot(6, "🗑️ FE DELETE WORKSPACE", feDeleteWorkspace)
 		updatePage9Slot(7, "🎨 FE DECAL SPAM", feDecalSpam)
 		updatePage9Slot(8, "💀 FE CRASH SERVER", feCrashServer)
 		updatePage9Slot(9, "🐌 FE SERVER LAG", feServerLag)
-
 	else
 		backdoorsFound = false
-		print("[РЕЗУЛЬТАТ] Бэкдоров НЕ НАЙДЕНО")
-		print("[РЕЗУЛЬТАТ] Слоты 5-9 останутся пустыми")
+		print("[RESULT] No backdoors found")
+		print("[RESULT] Slots 5-9 remain empty")
 
-		-- Очищаем слоты 5-9
 		for i = 5, 9 do
 			updatePage9Slot(i, "Empty", nil)
 		end
@@ -3449,9 +3178,8 @@ local function scanForBackdoors()
 	print("=" .. string.rep("=", 50))
 end
 
--- Регистрируем СЛОТ 4
 NewSection(9, 4, "🔍 SCAN BACKDOORS", function()
-	print("[BATRywKA] Запуск сканера бэкдоров...")
+	print("[BATRywKA] Starting backdoor scanner...")
 	scanForBackdoors()
 end)
 
