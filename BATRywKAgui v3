@@ -29,7 +29,7 @@ gui.Name = generateRandomName()
 gui.Enabled = false
 gui.ResetOnSpawn = false
 
-local targetParent = CoreGui or PlayerGui
+local targetParent = PlayerGui
 gui.Parent = targetParent
 
 local mainAnchor = Instance.new("Frame")
