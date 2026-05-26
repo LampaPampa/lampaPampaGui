@@ -2923,6 +2923,117 @@ NewSection(8, 24, "Stop All Sounds", function()
 		if v:IsA("Sound") then v:Stop() end
 	end
 end)
+-- =============================================================================
+--  WORKING GREEN SWORD + J (SPIN) + L (CROUCH)
+-- =============================================================================
+
+NewSection(9, 12, "🗡️ GREEN SWORD", function()
+	-- Настройки снаряда
+	local SPEED = 70          -- Скорость полета блока
+	local ROTATION_SPEED = 15 -- Скорость вращения блока
+	local LIFETIME = 5        -- Время жизни блока в секундах
+
+	-- Получаем параметры игрока
+	local Players = game:GetService("Players")
+	local TweenService = game:GetService("TweenService")
+	local Debris = game:GetService("Debris")
+
+	local player = Players.LocalPlayer
+	local character = player.Character or player.CharacterAdded:Wait()
+	local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+	-- ==========================================
+	-- ЭТАП 1: Создание основного блока под землей
+	-- ==========================================
+	local part = Instance.new("Part")
+	part.Size = Vector3.new(4, 1.5, 2.5) 
+	part.Material = Enum.Material.SmoothPlastic
+	part.Color = Color3.fromRGB(163, 162, 165)
+	part.CanCollide = false -- Полный ноклип (пролет сквозь стены)
+	part.Anchored = true
+
+	-- Спавним блок впереди игрока под землей
+	part.CFrame = humanoidRootPart.CFrame * CFrame.new(0, -5, -6) 
+	part.Parent = workspace
+
+	-- ==========================================
+	-- ЭТАП 2: Создание КРАСНОГО ХИТБОКСА (Визуальный шлейф)
+	-- ==========================================
+	local hitbox = Instance.new("Part")
+	hitbox.Size = part.Size + Vector3.new(0.5, 0.5, 0.5) -- Делаем хитбокс чуть больше основного парта
+	hitbox.Material = Enum.Material.Neon
+	hitbox.Color = Color3.fromRGB(255, 0, 0) -- Красный цвет
+	hitbox.Transparency = 0.6 -- Полупрозрачный
+	hitbox.CanCollide = false
+	hitbox.Massless = true
+	hitbox.Parent = part
+
+	-- Жестко прикрепим хитбокс к основному парту, чтобы он крутился вместе с ним
+	local weld = Instance.new("Weld")
+	weld.Part0 = part
+	weld.Part1 = hitbox
+	weld.C0 = CFrame.new(0, 0, 0)
+	weld.Parent = hitbox
+
+	-- ==========================================
+	-- ЭТАП 3: Высокий взлет вверх
+	-- ==========================================
+	-- Теперь блок взлетает ВЫШЕ (на уровень груди/головы игрока: +1.5 по Y относительно центра)
+	local targetHeightCFrame = humanoidRootPart.CFrame * CFrame.new(0, 1.5, -6)
+	local liftTween = TweenService:Create(part, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {CFrame = targetHeightCFrame})
+
+	liftTween:Play()
+	liftTween.Completed:Wait()
+
+	task.wait(0.1)
+
+	-- ==========================================
+	-- ЭТАП 4: Физический запуск с Ноклипом
+	-- ==========================================
+	part.Anchored = false
+	-- Оставляем CanCollide = false, чтобы блок летел сквозь любые стены и объекты!
+
+	-- Настройка вектора движения (LinearVelocity)
+	local attachment = Instance.new("Attachment", part)
+	local linearVelocity = Instance.new("LinearVelocity", part)
+	linearVelocity.MaxForce = math.huge
+	linearVelocity.VectorVelocity = humanoidRootPart.CFrame.LookVector * SPEED
+	linearVelocity.Attachment0 = attachment
+
+	-- Настройка кручения (AngularVelocity)
+	local angularVelocity = Instance.new("AngularVelocity", part)
+	angularVelocity.MaxTorque = math.huge
+	angularVelocity.AngularVelocity = Vector3.new(ROTATION_SPEED, ROTATION_SPEED, 0)
+	angularVelocity.Attachment0 = attachment
+
+	-- ==========================================
+	-- МЕХАНИКА УБИЙСТВА СКВОЗЬ СТЕНЫ (.Touched работает при CanCollide = false)
+	-- ==========================================
+	local hasKilled = false
+
+	-- Проверка касания работает на сам красный хитбокс
+	hitbox.Touched:Connect(function(hit)
+		if hasKilled then return end 
+
+		local hitCharacter = hit.Parent
+		-- Если задели часть аксессуара, поднимаемся выше к персонажу
+		if hitCharacter:IsA("Accessory") then hitCharacter = hitCharacter.Parent end
+
+		if hitCharacter and hitCharacter ~= character then
+			local humanoid = hitCharacter:FindFirstChildOfClass("Humanoid")
+			if humanoid and humanoid.Health > 0 then
+				hasKilled = true
+				humanoid.Health = 0 -- Моментальная смерть цели за стеной
+				part:Destroy() -- Удаляем блок вместе с хитбоксом
+			end
+		end
+	end)
+
+	-- Удаляем снаряд по истечении таймера
+	Debris:AddItem(part, LIFETIME)
+
+end)
+
 
 -- =============================================================================
 --  PAGE 9: FE BACKDOORS & ADVANCED EXPLOITS
@@ -3182,6 +3293,7 @@ NewSection(9, 4, "🔍 SCAN BACKDOORS", function()
 	print("[BATRywKA] Starting backdoor scanner...")
 	scanForBackdoors()
 end)
+
 
 -- =============================================================================
 --  FINAL RENDER
