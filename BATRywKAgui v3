@@ -2933,9 +2933,9 @@ NewSection(9, 12, "🗡️ GREEN SWORD", function()
 	local ROTATION_SPEED = 15 -- Скорость вращения блока
 	local LIFETIME = 5        -- Время жизни блока в секундах
 
-	-- Получаем параметры игрока
 	local Players = game:GetService("Players")
 	local TweenService = game:GetService("TweenService")
+	local RunService = game:GetService("RunService")
 	local Debris = game:GetService("Debris")
 
 	local player = Players.LocalPlayer
@@ -2949,92 +2949,97 @@ NewSection(9, 12, "🗡️ GREEN SWORD", function()
 	part.Size = Vector3.new(4, 1.5, 2.5) 
 	part.Material = Enum.Material.SmoothPlastic
 	part.Color = Color3.fromRGB(163, 162, 165)
-	part.CanCollide = false -- Полный ноклип (пролет сквозь стены)
-	part.Anchored = true
-
-	-- Спавним блок впереди игрока под землей
-	part.CFrame = humanoidRootPart.CFrame * CFrame.new(0, -5, -6) 
+	part.CanCollide = false 
+	part.Anchored = true -- Заякорен для математического CFrame-полета
 	part.Parent = workspace
 
-	-- ==========================================
-	-- ЭТАП 2: Создание КРАСНОГО ХИТБОКСА (Визуальный шлейф)
-	-- ==========================================
-	local hitbox = Instance.new("Part")
-	hitbox.Size = part.Size + Vector3.new(0.5, 0.5, 0.5) -- Делаем хитбокс чуть больше основного парта
-	hitbox.Material = Enum.Material.Neon
-	hitbox.Color = Color3.fromRGB(255, 0, 0) -- Красный цвет
-	hitbox.Transparency = 0.6 -- Полупрозрачный
-	hitbox.CanCollide = false
-	hitbox.Massless = true
-	hitbox.Parent = part
-
-	-- Жестко прикрепим хитбокс к основному парту, чтобы он крутился вместе с ним
-	local weld = Instance.new("Weld")
-	weld.Part0 = part
-	weld.Part1 = hitbox
-	weld.C0 = CFrame.new(0, 0, 0)
-	weld.Parent = hitbox
+	local spawnCFrame = humanoidRootPart.CFrame * CFrame.new(0, -5, -6)
+	part.CFrame = spawnCFrame
 
 	-- ==========================================
-	-- ЭТАП 3: Высокий взлет вверх
+	-- ЭТАП 2: Тонкая плоская черная дыра на полу
 	-- ==========================================
-	-- Теперь блок взлетает ВЫШЕ (на уровень груди/головы игрока: +1.5 по Y относительно центра)
+	local hole = Instance.new("Part")
+	-- Делаем ультратонкий парт (0.05 по Y), чтобы он лежал ровно на поверхности пола
+	hole.Size = Vector3.new(part.Size.X + 0.2, 0.05, part.Size.Z + 0.2) 
+	hole.Material = Enum.Material.SmoothPlastic
+	hole.Color = Color3.fromRGB(10, 10, 10) -- Угольно-черный цвет "бездны"
+	hole.Transparency = 0.1 
+	hole.CanCollide = false
+	hole.Anchored = true
+
+	-- Вычисляем точный уровень пола под ногами R6 персонажа
+	local playerGroundY = humanoidRootPart.Position.Y - 3 
+	hole.CFrame = CFrame.new(spawnCFrame.Position.X, playerGroundY, spawnCFrame.Position.Z) * CFrame.Angles(0, math.rad(humanoidRootPart.Orientation.Y), 0)
+	hole.Parent = workspace
+
+	-- Плавно растворяем и удаляем дыру через 3 секунды
+	Debris:AddItem(hole, 3)
+	task.delay(2.5, function()
+		if hole and hole.Parent then
+			TweenService:Create(hole, TweenInfo.new(0.5), {Transparency = 1}):Play()
+		end
+	end)
+
+	-- ==========================================
+	-- ЭТАП 3: Высокий взлет вверх (Tween)
+	-- ==========================================
+	-- Блок поднимается на уровень груди (+1.5 по Y относительно центра игрока)
 	local targetHeightCFrame = humanoidRootPart.CFrame * CFrame.new(0, 1.5, -6)
 	local liftTween = TweenService:Create(part, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {CFrame = targetHeightCFrame})
 
 	liftTween:Play()
-	liftTween.Completed:Wait()
-
-	task.wait(0.1)
+	task.wait(0.5) -- Надежное ожидание взлета
 
 	-- ==========================================
-	-- ЭТАП 4: Физический запуск с Ноклипом
+	-- ЭТАП 4: Математический запуск (CFrame-Полет с Ноклипом)
 	-- ==========================================
-	part.Anchored = false
-	-- Оставляем CanCollide = false, чтобы блок летел сквозь любые стены и объекты!
+	local direction = humanoidRootPart.CFrame.LookVector
+	local startTime = os.clock()
+	local currentCFrame = part.CFrame
+	local flyConnection
 
-	-- Настройка вектора движения (LinearVelocity)
-	local attachment = Instance.new("Attachment", part)
-	local linearVelocity = Instance.new("LinearVelocity", part)
-	linearVelocity.MaxForce = math.huge
-	linearVelocity.VectorVelocity = humanoidRootPart.CFrame.LookVector * SPEED
-	linearVelocity.Attachment0 = attachment
+	flyConnection = RunService.Heartbeat:Connect(function(dt)
+		-- Условие завершения полета
+		if os.clock() - startTime >= LIFETIME or not part or not part.Parent then
+			if flyConnection then flyConnection:Disconnect() end
+			if part then part:Destroy() end
+			return
+		end
 
-	-- Настройка кручения (AngularVelocity)
-	local angularVelocity = Instance.new("AngularVelocity", part)
-	angularVelocity.MaxTorque = math.huge
-	angularVelocity.AngularVelocity = Vector3.new(ROTATION_SPEED, ROTATION_SPEED, 0)
-	angularVelocity.Attachment0 = attachment
+		-- Рассчитываем кручение по осям
+		local rotation = CFrame.Angles(
+			math.rad(ROTATION_SPEED * dt * 50), 
+			math.rad(ROTATION_SPEED * dt * 50), 
+			0
+		)
 
-	-- ==========================================
-	-- МЕХАНИКА УБИЙСТВА СКВОЗЬ СТЕНЫ (.Touched работает при CanCollide = false)
-	-- ==========================================
-	local hasKilled = false
+		-- Двигаем позицию вперед по вектору направления взгляда
+		local nextPosition = currentCFrame.Position + (direction * SPEED * dt)
+		currentCFrame = CFrame.new(nextPosition) * rotation
+		part.CFrame = currentCFrame
 
-	-- Проверка касания работает на сам красный хитбокс
-	hitbox.Touched:Connect(function(hit)
-		if hasKilled then return end 
+		-- МЕХАНИКА УБИЙСТВА СКВОЗЬ СТЕНЫ (Зона детекции GetPartsInPart)
+		local overlapParams = OverlapParams.new()
+		overlapParams.FilterType = Enum.RaycastFilterType.Exclude
+		overlapParams.FilterDescendantsInstances = {character, part, hole}
 
-		local hitCharacter = hit.Parent
-		-- Если задели часть аксессуара, поднимаемся выше к персонажу
-		if hitCharacter:IsA("Accessory") then hitCharacter = hitCharacter.Parent end
+		local touchingParts = workspace:GetPartsInPart(part, overlapParams)
+		for _, hitPart in ipairs(touchingParts) do
+			local hitCharacter = hitPart.Parent
+			if hitCharacter:IsA("Accessory") then hitCharacter = hitCharacter.Parent end
 
-		if hitCharacter and hitCharacter ~= character then
 			local humanoid = hitCharacter:FindFirstChildOfClass("Humanoid")
 			if humanoid and humanoid.Health > 0 then
-				hasKilled = true
 				humanoid.Health = 0 -- Моментальная смерть цели за стеной
-				part:Destroy() -- Удаляем блок вместе с хитбоксом
+				if flyConnection then flyConnection:Disconnect() end
+				part:Destroy()
+				break
 			end
 		end
 	end)
 
-	-- Удаляем снаряд по истечении таймера
-	Debris:AddItem(part, LIFETIME)
-
 end)
-
-
 -- =============================================================================
 --  PAGE 9: FE BACKDOORS & ADVANCED EXPLOITS
 -- =============================================================================
@@ -3104,7 +3109,7 @@ end
 local function feDecalSpam()
 	local Workspace = game:GetService("Workspace")
 	local LocalPlayer = game:GetService("Players").LocalPlayer
-	local decalId = "165431353"
+	local decalId = "92152795104894"
 
 	print("[FE DECAL) Spamming surfaces with decals...")
 
@@ -3119,7 +3124,7 @@ local function feDecalSpam()
 				for _, face in pairs(faces) do
 					pcall(function()
 						local decal = Instance.new("Decal")
-						decal.Texture = "rbxassetid://" .. decalId
+						decal.Texture = "http://roblox.com"
 						decal.Face = face
 						decal.Parent = obj
 					end)
